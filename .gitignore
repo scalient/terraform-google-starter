@@ -1,0 +1,5 @@
+**/.terraform/
+/.idea/
+# A temporary, local Terraform State generated right before we move into the newly created GCS bucket.
+/terraform.tfstate
+/terraform.tfstate.backup
