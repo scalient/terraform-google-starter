@@ -25,6 +25,16 @@ module "administration_project" {
   billing_account   = var.billing_account
 
   activate_apis = [
+    "accesscontextmanager.googleapis.com",
+    "bigquery.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "cloudbilling.googleapis.com",
     "cloudidentity.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "essentialcontacts.googleapis.com",
+    "iam.googleapis.com",
+    "logging.googleapis.com",
+    "pubsub.googleapis.com",
+    "serviceusage.googleapis.com",
   ]
 }

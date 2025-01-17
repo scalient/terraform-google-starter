@@ -29,7 +29,7 @@ module Utilities
     )
   end
 
-  def self.create_terraform_backend_and_migrate(rake_instance, backend_file, bucket, prefix: "")
+  def self.create_terraform_backend(rake_instance, backend_file, bucket, prefix: "terraform/state")
     backend_file.open("wb") do |f|
       f.write(
         JSON.dump(
@@ -47,14 +47,16 @@ module Utilities
       )
     end
 
+    # Stage the new backend file for good measure. Add the `-f` option in case the file happens to be `.gitignore`'d.
+    rake_instance.send(:sh, "git", "add", "-f", "--", backend_file.to_s)
+  end
+
+  def self.migrate_terraform_state(rake_instance)
     # Back up the local tfstate for good measure.
     rake_instance.send(:cp, "terraform.tfstate", "terraform.tfstate.backup")
 
     # Now that the backend file is written, run the migration process by detecting a local tfstate and uploading its
     # contents to the bucket.
     rake_instance.send(:sh, "terraform", "init", "-migrate-state")
-
-    # Stage the new backend file for good measure.
-    rake_instance.send(:sh, "git", "add", "--", backend_file.to_s)
   end
 end

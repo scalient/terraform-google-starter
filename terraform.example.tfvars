@@ -44,3 +44,19 @@ default_region_kms = "us"
 folder_prefix      = "fldr"
 project_prefix     = "prj"
 bucket_prefix      = "bkt"
+
+// From stage 1: org.
+
+# Must include the domain of the organization you are deploying the foundation.
+domains_to_allow = ["example.com"]
+
+essential_contacts_domains_to_allow = ["@example.com"]
+
+scc_notification_name = "scc-notify"
+
+// Commented out. Provided dynamically.
+// remote_state_bucket = "REMOTE_STATE_BUCKET"
+
+log_export_storage_location = "US"
+
+billing_export_dataset_location = "US"
