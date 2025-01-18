@@ -38,6 +38,10 @@ stage_org_dir = Pathname.new("modules/1-org/envs/shared")
 
 STAGE_NAME_PATTERN = Regexp.new("\\Amodules/(?:[1-9][0-9]*|0)\\-(?<name>[a-z0-9\\-_]+)")
 
+task "ensure_permissions" do
+  Utilities.add_authenticated_user_roles(self)
+end
+
 task "prerequisites" => receipts["prerequisites"]
 
 file receipts["prerequisites"] => user_tfvars do
