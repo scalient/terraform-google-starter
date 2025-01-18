@@ -17,6 +17,28 @@
 require "json"
 
 module Utilities
+  # These are conservatively the union of the IAM roles conferred to Terraform service accounts of the form
+  # `sa-terraform-#{foundation_stage}@#{project_id}.iam.gserviceaccount.com`.
+  GCP_IAM_ROLES = [
+    "roles/accesscontextmanager.policyAdmin",
+    "roles/browser",
+    "roles/cloudasset.owner",
+    "roles/essentialcontacts.admin",
+    "roles/logging.configWriter",
+    "roles/orgpolicy.policyAdmin",
+    "roles/resourcemanager.folderAdmin",
+    "roles/resourcemanager.organizationAdmin",
+    "roles/resourcemanager.organizationViewer",
+    # Don't declare because the `bootstrap` foundation stage mandates that only stage-specific Terraform service
+    # accounts be organization project creators.
+    # "roles/resourcemanager.projectCreator",
+    "roles/resourcemanager.tagAdmin",
+    "roles/resourcemanager.tagUser",
+    "roles/securitycenter.notificationConfigEditor",
+    "roles/securitycenter.sourcesEditor",
+    "roles/serviceusage.serviceUsageConsumer",
+  ].freeze
+
   def self.terraform_init(rake_instance)
     rake_instance.send(:sh, "terraform", "init")
     # Potentially rewrite the lock file to include cross-architecture providers.
@@ -58,5 +80,40 @@ module Utilities
     # Now that the backend file is written, run the migration process by detecting a local tfstate and uploading its
     # contents to the bucket.
     rake_instance.send(:sh, "terraform", "init", "-migrate-state")
+  end
+
+  def self.add_authenticated_user_roles(rake_instance, roles: GCP_IAM_ROLES)
+    parent_read, child_write = IO.pipe
+
+    rake_instance.send(:sh, "gcloud", "config", "list", "account", "--format", "value(core.account)", out: child_write)
+
+    child_write.close
+    authenticated_user = parent_read.read.chomp
+
+    child_read, parent_write = IO.pipe
+    parent_read, child_write = IO.pipe
+
+    Thread.new do
+      heredoc_content = <<EOS
+jsonencode(var.org_id)
+EOS
+      parent_write.write(heredoc_content)
+      parent_write.close
+    end
+
+    rake_instance.send(:sh, "terraform", "console", "-var-file", "terraform.tfvars", in: child_read, out: child_write)
+
+    child_write.close
+
+    # First strip away the double quotes, and then parse the JSON.
+    organization_id = JSON.parse(JSON.parse(parent_read.read))
+
+    roles.each do |role|
+      rake_instance.send(
+        :sh, "gcloud", "organizations", "add-iam-policy-binding", organization_id,
+        "--member", "user:#{authenticated_user}",
+        "--role", role,
+      )
+    end
   end
 end
