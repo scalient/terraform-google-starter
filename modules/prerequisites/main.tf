@@ -35,6 +35,7 @@ module "administration_project" {
     "iam.googleapis.com",
     "logging.googleapis.com",
     "pubsub.googleapis.com",
+    "servicenetworking.googleapis.com",
     "serviceusage.googleapis.com",
   ]
 }
