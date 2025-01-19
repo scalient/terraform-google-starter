@@ -15,6 +15,7 @@
 # the License.
 
 require "json"
+require "open3"
 
 module Utilities
   # These are conservatively the union of the IAM roles conferred to Terraform service accounts of the form
@@ -83,30 +84,43 @@ module Utilities
   end
 
   def self.add_authenticated_user_roles(rake_instance, roles: GCP_IAM_ROLES)
-    parent_read, child_write = IO.pipe
+    child_output = nil
 
-    rake_instance.send(:sh, "gcloud", "config", "list", "account", "--format", "value(core.account)", out: child_write)
+    Open3.popen3(
+      "gcloud", "config", "list", "account", "--format", "value(core.account)",
+    ) do |stdin, stdout, stderr, wait_thr|
+      stdin.close
 
-    child_write.close
-    authenticated_user = parent_read.read.chomp
+      Thread.new do
+        $stderr.print(stderr.read)
+      end
 
-    child_read, parent_write = IO.pipe
-    parent_read, child_write = IO.pipe
+      child_output = stdout.read
 
-    Thread.new do
-      heredoc_content = <<EOS
-jsonencode(var.org_id)
-EOS
-      parent_write.write(heredoc_content)
-      parent_write.close
+      if (status = wait_thr.value) != 0
+        raise SystemCallError.new("Terraform call failed", status.exitstatus)
+      end
     end
 
-    rake_instance.send(:sh, "terraform", "console", "-var-file", "terraform.tfvars", in: child_read, out: child_write)
+    authenticated_user = child_output.chomp
 
-    child_write.close
+    Open3.popen3(
+      "terraform", "output", "-json",
+    ) do |stdin, stdout, stderr, wait_thr|
+      stdin.close
 
-    # First strip away the double quotes, and then parse the JSON.
-    organization_id = JSON.parse(JSON.parse(parent_read.read))
+      Thread.new do
+        $stderr.print(stderr.read)
+      end
+
+      child_output = stdout.read
+
+      if (status = wait_thr.value) != 0
+        raise SystemCallError.new("Terraform call failed", status.exitstatus)
+      end
+    end
+
+    organization_id = JSON.parse(child_output)["organization_id"]["value"]
 
     roles.each do |role|
       rake_instance.send(
