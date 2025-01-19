@@ -35,6 +35,7 @@ user_tfvars = Pathname.new("terraform.tfvars")
 prerequisites_tfvars = Pathname.new("00_prerequisites.auto.tfvars.json")
 stage_bootstrap_dir = Pathname.new("modules/0-bootstrap")
 stage_bootstrap_tfvars = Pathname.new("01_stage_bootstrap.auto.tfvars.json")
+stage_organization_tfvars = Pathname.new("02_stage_organization.auto.tfvars.json")
 stage_org_dir = Pathname.new("modules/1-org/envs/shared")
 
 STAGE_NAME_PATTERN = Regexp.new("\\Amodules/(?:[1-9][0-9]*|0)\\-(?<name>[a-z0-9\\-_]+)")
@@ -177,6 +178,8 @@ file receipts["stage_organization"] => receipts["migrate"] do
     JSON.parse(f.read)["groups"]["billing_project"]
   end
 
+  child_output = nil
+
   Dir.chdir(stage_org_dir) do
     # The below run seems to contain resources that require a quota project.
     ENV["GOOGLE_CLOUD_QUOTA_PROJECT"] = billing_project_id
@@ -188,6 +191,29 @@ file receipts["stage_organization"] => receipts["migrate"] do
        "-var-file", stage_bootstrap_tfvars.relative_path_from(stage_org_dir).to_s
 
     ENV.delete("GOOGLE_CLOUD_QUOTA_PROJECT")
+
+    heredoc_content = <<EOS
+.values.root_module.resources[] |
+select(.address == "google_access_context_manager_access_policy.access_policy[0]") |
+.values.id
+EOS
+
+    Open3.pipeline_rw(["terraform", "show", "-json"], ["jq", heredoc_content]) do |first_stdin, last_stdout, wait_thrs|
+      first_stdin.close
+      child_output = last_stdout.read
+
+      wait_thrs.each do |wait_thr|
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("Terraform call failed", status.exitstatus)
+        end
+      end
+    end
+  end
+
+  access_context_manager_policy_id = JSON.parse(child_output)
+
+  stage_organization_tfvars.open("wb") do |f|
+    f.write(JSON.dump({access_context_manager_policy_id: access_context_manager_policy_id}))
   end
 
   touch receipts["stage_organization"]
