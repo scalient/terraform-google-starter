@@ -79,3 +79,8 @@ variable "billing_export_dataset_location" {}
 variable "access_context_manager_policy_id" {
   default = null
 }
+
+// Stage 3: networks-dual-svpc.
+variable "domain" {}
+variable "perimeter_additional_members" {}
+variable "target_name_server_addresses" {}
