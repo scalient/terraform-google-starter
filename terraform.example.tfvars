@@ -60,3 +60,29 @@ scc_notification_name = "scc-notify"
 log_export_storage_location = "US"
 
 billing_export_dataset_location = "US"
+
+// From stage 3: networks-dual-svpc.
+
+// Commented out. Provided dynamically.
+// access_context_manager_policy_id = ACCESS_CONTEXT_MANAGER_ID
+
+// The DNS name of peering managed zone. Must end with a period.
+domain = "example.com."
+
+// Update the following line and add you email in the perimeter_additional_members list.
+// You must be in this list to be able to view/access resources in the project protected by the VPC service controls.
+
+perimeter_additional_members = ["user:YOUR-USER-EMAIL@example.com"]
+
+// List of IPv4 address of target name servers for the forwarding zone configuration.
+// See https://cloud.google.com/dns/docs/overview#dns-forwarding-zones
+target_name_server_addresses = [
+  {
+    ipv4_address    = "192.168.0.1",
+    forwarding_path = "default"
+  },
+  {
+    ipv4_address    = "192.168.0.2",
+    forwarding_path = "default"
+  }
+]
