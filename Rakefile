@@ -52,7 +52,9 @@ task "prerequisites" => receipts["prerequisites"]
 
 file receipts["prerequisites"] => user_tfvars do
   Utilities.terraform_init(self)
-  sh "terraform", "apply"
+  # Apply just the `prerequisites` module because this is the initialization run, and the developer could have added
+  # later stage modules in `main.tf`.
+  sh "terraform", "apply", "-target", "module.prerequisites"
 
   child_output = nil
 
