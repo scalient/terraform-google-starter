@@ -33,14 +33,17 @@ receipts = {}
   receipts[name] = Pathname.new("receipts/#{name}")
 end
 
+overrides_dir = Pathname.new("overrides")
 user_tfvars = Pathname.new("terraform.tfvars")
 prerequisites_tfvars = Pathname.new("00_prerequisites.auto.tfvars.json")
 stage_bootstrap_dir = Pathname.new("modules/0-bootstrap")
 stage_bootstrap_tfvars = Pathname.new("01_stage_bootstrap.auto.tfvars.json")
 stage_organization_tfvars = Pathname.new("02_stage_organization.auto.tfvars.json")
 stage_org_dir = Pathname.new("modules/1-org/envs/shared")
-stage_environments_envs_dir = Pathname.new("modules/2-environments/envs")
-stage_networks_shared_vpc_envs_dir = Pathname.new("modules/3-networks-dual-svpc/envs")
+stage_environments_dir = Pathname.new("modules/2-environments")
+stage_environments_envs_dir = stage_environments_dir.join("envs")
+stage_networks_shared_vpc_dir = Pathname.new("modules/3-networks-dual-svpc")
+stage_networks_shared_vpc_envs_dir = stage_networks_shared_vpc_dir.join("envs")
 
 STAGE_NAME_PATTERN = Regexp.new("\\Amodules/(?:[1-9][0-9]*|0)\\-(?<name>[a-z0-9\\-_]+)")
 
@@ -109,7 +112,12 @@ end
 
 task "bootstrap" => receipts["stage_bootstrap"]
 
-file receipts["stage_bootstrap"] => receipts["prerequisites"] do
+file receipts["stage_bootstrap"] => [
+  receipts["prerequisites"],
+  *Utilities.find_extra_files(overrides_dir, stage_bootstrap_dir),
+] do
+  Utilities.install_extra_files(overrides_dir, stage_bootstrap_dir)
+
   child_output = nil
 
   Dir.chdir(stage_bootstrap_dir) do
@@ -197,7 +205,12 @@ end
 
 task "organization" => receipts["stage_organization"]
 
-file receipts["stage_organization"] => receipts["migrate"] do
+file receipts["stage_organization"] => [
+  receipts["migrate"],
+  *Utilities.find_extra_files(overrides_dir, stage_org_dir),
+] do
+  Utilities.install_extra_files(overrides_dir, stage_org_dir)
+
   billing_project_id = prerequisites_tfvars.open("rb") do |f|
     JSON.parse(f.read)["groups"]["billing_project"]
   end
@@ -245,7 +258,12 @@ end
 
 task "environments" => receipts["stage_environments"]
 
-file receipts["stage_environments"] => receipts["stage_organization"] do
+file receipts["stage_environments"] => [
+  receipts["stage_organization"],
+  *Utilities.find_extra_files(overrides_dir, stage_environments_dir),
+] do
+  Utilities.install_extra_files(overrides_dir, stage_environments_dir)
+
   # The below runs seem to contain resources that require a quota project.
   billing_project_id = prerequisites_tfvars.open("rb") do |f|
     JSON.parse(f.read)["groups"]["billing_project"]
@@ -270,7 +288,12 @@ end
 
 task "networks_shared_vpc" => receipts["stage_networks_shared_vpc"]
 
-file receipts["stage_networks_shared_vpc"] => receipts["stage_environments"] do
+file receipts["stage_networks_shared_vpc"] => [
+  receipts["stage_environments"],
+  *Utilities.find_extra_files(overrides_dir, stage_networks_shared_vpc_dir),
+] do
+  Utilities.install_extra_files(overrides_dir, stage_networks_shared_vpc_dir)
+
   # The below runs seem to contain resources that require a quota project.
   billing_project_id = prerequisites_tfvars.open("rb") do |f|
     JSON.parse(f.read)["groups"]["billing_project"]
