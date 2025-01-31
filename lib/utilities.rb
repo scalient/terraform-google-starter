@@ -156,4 +156,31 @@ EOS
       )
     end
   end
+
+  def self.find_extra_files(extra_dir, dst_subdir)
+    if !dst_subdir.relative?
+      raise ArgumentError, "Directory path must be relative"
+    end
+
+    extra_subdir = extra_dir.join(*dst_subdir.each_filename.to_a[1..])
+
+    if extra_subdir.exist?
+      extra_subdir.find.select(&:file?)
+    else
+      []
+    end
+  end
+
+  def self.install_extra_files(extra_dir, dst_subdir)
+    if !extra_dir.relative? || !dst_subdir.relative?
+      raise ArgumentError, "Directory path must be relative"
+    end
+
+    dst_dir = Pathname.new(dst_subdir.each_filename.to_a.first)
+
+    find_extra_files(extra_dir, dst_subdir).each do |extra_file|
+      dst_link = dst_dir.join(*extra_file.each_filename.to_a[1..])
+      FileUtils.ln_sf(extra_file.relative_path_from(dst_link.parent), dst_link)
+    end
+  end
 end
