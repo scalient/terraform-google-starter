@@ -15,3 +15,16 @@ module "prerequisites" {
   billing_account             = var.billing_account
   org_id                      = var.org_id
 }
+
+# An example. We advise you to use a separate file to fill these in.
+#
+# locals {
+#   environments = []
+# }
+#
+# module "projects" {
+#   for_each = toset(local.environments)
+#   source              = "./modules/project"
+#   env                 = each.key
+#   remote_state_bucket = var.remote_state_bucket
+# }
