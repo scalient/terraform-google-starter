@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-output "administration_project_id" {
-  description = "The administration project's id."
-  value       = module.prerequisites.administration_project_id
+// Override this variable because we were having GKE private cluster networking issues.
+variable "enable_all_vpc_internal_traffic" {
+  default = true
 }
 
-output "organization_id" {
-  description = "The organization id."
-  value       = var.org_id
-}
-
-output "environments_to_projects" {
-  description = "Export the environments-to-projects map to downstream modules."
-  value       = {
-    for environment, project in module.projects : environment => {
-      project_id = project.project_id
-      cluster    = project.cluster
-    }
-  }
+// Install the internet gateway.
+variable "nat_enabled" {
+  default = true
 }
