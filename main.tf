@@ -7,6 +7,11 @@ terraform {
   }
 }
 
+locals {
+  // TODO: Fill this in to activate various environments.
+  environments = []
+}
+
 module "prerequisites" {
   source = "./modules/prerequisites"
 

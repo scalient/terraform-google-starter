@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-output "administration_project_id" {
-  description = "The administration project's id."
-  value       = module.prerequisites.administration_project_id
+variable "env" {
+  description = "The environment."
+  type        = string
 }
 
-output "organization_id" {
-  description = "The organization id."
-  value       = var.org_id
+variable "remote_state_bucket" {
+  description = "The remote tfstate bucket."
+  type        = string
 }
 
-output "environments" {
-  description = "Export the in-use environments to downstream modules."
-  value       = local.environments
+variable "activate_apis" {
+  description = "The list of APIs to be activated"
+  type        = list
+  default = []
+}
+
+variable "default_service_account_iam_roles" {
+  description = "The project default service account's IAM roles"
+  type        = list
+  default = []
 }
