@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-output "administration_project_id" {
-  description = "The administration project's id."
-  value       = module.prerequisites.administration_project_id
+output "project_id" {
+  description = "The main project id."
+  value = module.project.project_id
 }
 
-output "organization_id" {
-  description = "The organization id."
-  value       = var.org_id
-}
-
-output "environments_to_projects" {
-  description = "Export the environments-to-projects map to downstream modules."
-  value       = module.projects
-  sensitive   = true
+output "cluster" {
+  description = "The GKE cluster."
+  value       = google_container_cluster._
 }
