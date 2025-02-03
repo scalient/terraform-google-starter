@@ -183,4 +183,53 @@ EOS
       FileUtils.ln_sf(extra_file.relative_path_from(dst_link.parent), dst_link)
     end
   end
+
+  def self.create_terraform_tasks(rake_instance, target, receipt_file, working_dirs, dependencies = [], &block)
+    if !dependencies.is_a?(Array)
+      dependencies = [dependencies]
+    end
+
+    case working_dirs
+    when Pathname
+      working_dirs = [working_dirs]
+    when String
+      working_dirs = [Pathname.new(working_dirs)]
+    end
+
+    dot_terraform_dirs = working_dirs.map do |working_dir|
+      dot_terraform_dir = working_dir.join(".terraform")
+
+      rake_instance.send(:directory, dot_terraform_dir) do
+        Dir.chdir(working_dir) do
+          terraform_init(rake_instance)
+        end
+      end
+
+      dot_terraform_dir
+    end
+
+    computed_dependencies = dependencies.map do |dependency|
+      if dependency.is_a?(String)
+        dependency = Pathname.new(dependency)
+      end
+
+      if dependency.directory?
+        dependency.glob("**/*.{json,tf,tfvars}")
+      else
+        dependency
+      end
+    end.tap(&:flatten!).tap(&:uniq!)
+
+    if receipt_file
+      rake_instance.send(:task, target => receipt_file)
+
+      rake_instance.send(:file, receipt_file => [*dot_terraform_dirs, *computed_dependencies]) do
+        block.call
+
+        rake_instance.send(:touch, receipt_file)
+      end
+    else
+      rake_instance.send(:task, target => [*dot_terraform_dirs, *computed_dependencies], &block)
+    end
+  end
 end
