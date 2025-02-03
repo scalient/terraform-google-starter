@@ -29,6 +29,7 @@ receipts = {}
   "stage_organization",
   "stage_environments",
   "stage_networks_shared_vpc",
+  "main",
 ].each do |name|
   receipts[name] = Pathname.new("receipts/#{name}")
 end
@@ -323,4 +324,12 @@ file receipts["stage_networks_shared_vpc"] => [
   touch receipts["stage_networks_shared_vpc"]
 end
 
-task "default" => "networks_shared_vpc"
+task "default" => receipts["main"]
+
+file receipts["main"] => receipts["stage_shared_vpc"] do
+  Utilities.terraform_init(self)
+
+  sh "terraform", "apply"
+
+  touch receipts["main"]
+end
