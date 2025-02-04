@@ -222,4 +222,43 @@ EOS
       rake_instance.send(:task, target => [*dot_terraform_dirs, *computed_dependencies], &block)
     end
   end
+
+  def self.create_secret(_rake_instance, key, value, environment = nil)
+    if !environment
+      terraform_output_key_prefix = "org"
+      terraform_dir = Pathname.new("modules/1-org/envs/shared")
+    else
+      terraform_output_key_prefix = "env"
+      terraform_dir = Pathname.new("modules/2-environments/envs/#{environment}")
+    end
+
+    Dir.chdir(terraform_dir) do
+      child_output = nil
+
+      Open3.popen3(
+        "terraform", "output", "-json",
+      ) do |stdin, stdout, _stderr, wait_thr|
+        stdin.close
+        child_output = stdout.read
+
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("Terraform call failed", status.exitstatus)
+        end
+      end
+
+      project_id = JSON.parse(child_output)["#{terraform_output_key_prefix}_secrets_project_id"]["value"]
+
+      Open3.popen3(
+        "gcloud", "secrets", "create", "--project", project_id, "--data-file", "-", key,
+      ) do |stdin, stdout, _stderr, wait_thr|
+        stdin.write(value)
+        stdin.close
+        stdout.read
+
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("gcloud call failed", status.exitstatus)
+        end
+      end
+    end
+  end
 end
