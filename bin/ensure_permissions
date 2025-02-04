@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "pathname"
+require "rake"
+require "rake/file_utils"
+
+require_relative "../lib/utilities"
+
+Dir.chdir(Pathname.new("../..").expand_path(__FILE__))
+
+class << self
+  include FileUtils
+end
+
+Utilities.add_authenticated_user_roles(self)
