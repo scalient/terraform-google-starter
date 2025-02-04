@@ -60,10 +60,6 @@ kubernetes_terraform_dir = Pathname.new("modules/kubernetes")
 
 STAGE_NAME_PATTERN = Regexp.new("\\Amodules/(?:[1-9][0-9]*|0)\\-(?<name>[a-z0-9\\-_]+)")
 
-task "ensure_permissions" do
-  Utilities.add_authenticated_user_roles(self)
-end
-
 Utilities.create_terraform_tasks(
   self, "prerequisites", receipts["prerequisites"], current_dir,
   [prerequisites_dir, user_tfvars, *current_dir.glob("*.tf")],
