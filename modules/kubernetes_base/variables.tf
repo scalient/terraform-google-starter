@@ -20,6 +20,11 @@ variable "project" {
     project_id = string
     cluster = object({
       name = string
+      workload_identity_config = list(
+        object({
+          workload_pool = string
+        })
+      )
     })
   })
 }
