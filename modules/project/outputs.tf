@@ -28,3 +28,10 @@ output "cluster" {
     default_service_account = var.kubernetes_default_service_account
   }
 }
+
+output "database" {
+  description = "The Cloud SQL database."
+  value = {
+    instance_name = module.database["_"] != null ? module.database["_"].instance_name : null
+  }
+}
