@@ -24,16 +24,19 @@ variable "remote_state_bucket" {
   type        = string
 }
 
-variable "activate_apis" {
-  description = "The list of APIs to be activated."
-  type        = list(any)
-  default     = []
+variable "project_id" {
+  description = "The main project id."
+  type        = string
 }
 
-variable "default_service_account_iam_roles" {
-  description = "The project default service account's IAM roles."
-  type        = list(any)
-  default     = []
+variable "cluster_name" {
+  description = "The GKE cluster name (unique with the location)."
+  type        = string
+}
+
+variable "cluster_location" {
+  description = "The GKE cluster location (unique with the name)."
+  type        = string
 }
 
 variable "kubernetes_default_namespace" {
@@ -44,10 +47,4 @@ variable "kubernetes_default_namespace" {
 variable "kubernetes_default_service_account" {
   description = "The default service account that pods will run as."
   default     = "default"
-}
-
-variable "include_database" {
-  description = "Whether or not to provision a Cloud SQL database"
-  type        = bool
-  default     = false
 }
