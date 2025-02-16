@@ -19,8 +19,10 @@ variable "project" {
   type = object({
     project_id = string
     cluster = object({
-      name     = string
-      location = string
+      name                    = string
+      location                = string
+      default_namespace       = string
+      default_service_account = string
     })
   })
 }

@@ -22,7 +22,9 @@ output "project_id" {
 output "cluster" {
   description = "The GKE cluster information (unique with name and location)."
   value = {
-    name     = google_container_cluster._.name
-    location = google_container_cluster._.location
+    name                    = google_container_cluster._.name
+    location                = google_container_cluster._.location
+    default_namespace       = var.kubernetes_default_namespace
+    default_service_account = var.kubernetes_default_service_account
   }
 }

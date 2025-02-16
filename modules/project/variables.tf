@@ -35,3 +35,13 @@ variable "default_service_account_iam_roles" {
   type        = list(any)
   default     = []
 }
+
+variable "kubernetes_default_namespace" {
+  description = "The default namespace that pods will run under."
+  default     = "default"
+}
+
+variable "kubernetes_default_service_account" {
+  description = "The default service account that pods will run as."
+  default     = "default"
+}
