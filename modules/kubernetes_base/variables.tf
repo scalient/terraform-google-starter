@@ -26,6 +26,8 @@ variable "project" {
         })
       )
     })
+    kubernetes_default_namespace       = string
+    kubernetes_default_service_account = string
   })
 }
 

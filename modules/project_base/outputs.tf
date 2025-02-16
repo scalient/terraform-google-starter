@@ -23,3 +23,13 @@ output "cluster" {
   description = "The GKE cluster."
   value       = google_container_cluster._
 }
+
+output "kubernetes_default_namespace" {
+  description = "The default namespace that pods will run under."
+  value       = var.kubernetes_default_namespace
+}
+
+output "kubernetes_default_service_account" {
+  description = "The default service account that pods will run as."
+  value       = var.kubernetes_default_service_account
+}
