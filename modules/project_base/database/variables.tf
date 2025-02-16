@@ -14,27 +14,42 @@
  * limitations under the License.
  */
 
-output "project_id" {
-  description = "The main project id."
-  value       = module.project.project_id
+variable "env" {
+  description = "The environment."
+  type        = string
 }
 
-output "cluster" {
+variable "remote_state_bucket" {
+  description = "The remote tfstate bucket."
+  type        = string
+}
+
+variable "project" {
+  description = "The main project."
+  type = object({
+    project_id     = string
+    project_number = string
+  })
+}
+
+variable "cluster" {
   description = "The GKE cluster."
-  value       = google_container_cluster._
+  type = object({
+    name = string
+    workload_identity_config = list(
+      object({
+        workload_pool = string
+      })
+    )
+  })
 }
 
-output "kubernetes_default_namespace" {
+variable "kubernetes_default_namespace" {
   description = "The default namespace that pods will run under."
-  value       = var.kubernetes_default_namespace
+  default     = "default"
 }
 
-output "kubernetes_default_service_account" {
+variable "kubernetes_default_service_account" {
   description = "The default service account that pods will run as."
-  value       = var.kubernetes_default_service_account
-}
-
-output "database" {
-  description = "The Cloud SQL database."
-  value       = module.database["_"] != null ? module.database["_"].instance : null
+  default     = "default"
 }

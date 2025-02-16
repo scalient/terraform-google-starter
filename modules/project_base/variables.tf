@@ -45,3 +45,9 @@ variable "kubernetes_default_service_account" {
   description = "The default service account that pods will run as."
   default     = "default"
 }
+
+variable "include_database" {
+  description = "Whether or not to provision a Cloud SQL database"
+  type        = bool
+  default     = false
+}

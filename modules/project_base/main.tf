@@ -32,7 +32,12 @@ module "project" {
       "container.googleapis.com",
       // Enable shared VPC manipulation.
       "servicenetworking.googleapis.com",
-    ]
+    ],
+    (var.include_database ? [
+      // Needed to provision a database.
+      "sql-component.googleapis.com",
+      "sqladmin.googleapis.com",
+    ] : []),
   )
 
   // Instantiate the GKE IAM service agent. This allows GKE to access things like shared VPC infrastructure. Disable
@@ -91,4 +96,16 @@ resource "google_project_organization_policy" "allow_external_ips" {
       all = true
     }
   }
+}
+
+module "database" {
+  source = "./database"
+  for_each = toset(var.include_database ? ["_"] : [])
+
+  env                                = var.env
+  remote_state_bucket                = var.remote_state_bucket
+  project                            = module.project
+  cluster                            = google_container_cluster._
+  kubernetes_default_namespace       = var.kubernetes_default_namespace
+  kubernetes_default_service_account = var.kubernetes_default_service_account
 }
