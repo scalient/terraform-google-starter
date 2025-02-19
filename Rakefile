@@ -41,6 +41,7 @@ user_tfvars = Pathname.new("terraform.tfvars")
 prerequisites_dir = Pathname.new("modules/prerequisites")
 prerequisites_tfvars = Pathname.new("00_prerequisites.auto.tfvars.json")
 project_dir = Pathname.new("modules/project")
+common_dir = Pathname.new("modules/common")
 stage_bootstrap_dir = Pathname.new("modules/0-bootstrap")
 stage_bootstrap_tfvars = Pathname.new("01_stage_bootstrap.auto.tfvars.json")
 stage_organization_tfvars = Pathname.new("02_stage_organization.auto.tfvars.json")
@@ -330,7 +331,7 @@ Utilities.create_terraform_tasks(
   self, "default", receipts["main"], current_dir,
   [
     receipts["stage_networks_shared_vpc"],
-    prerequisites_dir, project_dir, user_tfvars, *current_dir.glob("*.tf"),
+    prerequisites_dir, project_dir, common_dir, user_tfvars, *current_dir.glob("*.tf"),
   ],
 ) do
   sh "terraform", "apply"
@@ -340,7 +341,7 @@ Utilities.create_terraform_tasks(
   self, "kubernetes_prerequisites", receipts["kubernetes_prerequisites"], kubernetes_terraform_dir,
   [
     receipts["main"],
-    prerequisites_dir, project_dir, kubernetes_terraform_dir, user_tfvars,
+    prerequisites_dir, project_dir, common_dir, kubernetes_terraform_dir, user_tfvars,
   ],
 ) do
   bucket = stage_bootstrap_tfvars.open("rb") do |f|
@@ -367,7 +368,7 @@ Utilities.create_terraform_tasks(
   self, "kubernetes_apply", nil, kubernetes_terraform_dir,
   [
     receipts["kubernetes_prerequisites"],
-    prerequisites_dir, project_dir, kubernetes_terraform_dir, user_tfvars,
+    prerequisites_dir, project_dir, common_dir, kubernetes_terraform_dir, user_tfvars,
   ],
 ) do
   Dir.chdir(kubernetes_terraform_dir) do

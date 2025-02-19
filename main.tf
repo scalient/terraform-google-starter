@@ -22,6 +22,11 @@ module "prerequisites" {
 #   environments = []
 # }
 #
+# module "common" {
+#   source              = "./modules/common"
+#   remote_state_bucket = var.remote_state_bucket
+# }
+#
 # module "projects" {
 #   for_each = toset(local.environments)
 #   source              = "./modules/project"
