@@ -233,15 +233,7 @@ EOS
     end
   end
 
-  def self.secret_create(key, value, environment: nil)
-    if !key
-      raise ArgumentError, "Please provide the secret's key"
-    end
-
-    if !value
-      raise ArgumentError, "Please provide the secret's value"
-    end
-
+  def self.run_secret_action(environment: nil, &block)
     if !environment
       terraform_output_key_prefix = "org"
       terraform_dir = Pathname.new("modules/1-org/envs/shared")
@@ -271,6 +263,20 @@ EOS
 
       project_id = JSON.parse(child_output)["#{terraform_output_key_prefix}_secrets_project_id"]["value"]
 
+      block.call(project_id)
+    end
+  end
+
+  def self.secret_create(key, value, environment: nil)
+    if !key
+      raise ArgumentError, "Please provide the secret's key"
+    end
+
+    if !value
+      raise ArgumentError, "Please provide the secret's value"
+    end
+
+    run_secret_action(environment: environment) do |project_id|
       Open3.popen3(
         "gcloud", "secrets", "create", "--project", project_id, "--data-file", "-", "--", key,
       ) do |stdin, stdout, stderr, wait_thr|
@@ -284,6 +290,78 @@ EOS
         end
 
         stdout.read
+
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("gcloud call failed", status.exitstatus)
+        end
+      end
+    end
+  end
+
+  def self.secret_delete(key, environment: nil)
+    if !key
+      raise ArgumentError, "Please provide the secret's key"
+    end
+
+    run_secret_action(environment: environment) do |project_id|
+      Open3.popen3(
+        "gcloud", "secrets", "delete", "--project", project_id, "--quiet", "--", key,
+      ) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+
+        Thread.new do
+          $stderr.print(stderr.read)
+        end
+
+        stdout.read
+
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("gcloud call failed", status.exitstatus)
+        end
+      end
+    end
+  end
+
+  def self.secret_access(key, version, environment: nil)
+    if !key
+      raise ArgumentError, "Please provide the secret's key"
+    end
+
+    run_secret_action(environment: environment) do |project_id|
+      Open3.popen3(
+        "gcloud", "secrets", "versions", "access", "--project", project_id, "--secret", key, "--", version,
+      ) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+
+        Thread.new do
+          $stderr.print(stderr.read)
+        end
+
+        Thread.new do
+          puts stdout.read
+        end
+
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("gcloud call failed", status.exitstatus)
+        end
+      end
+    end
+  end
+
+  def self.secret_list(environment: nil)
+    run_secret_action(environment: environment) do |project_id|
+      Open3.popen3(
+        "gcloud", "secrets", "list", "--project", project_id,
+      ) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+
+        Thread.new do
+          $stderr.print(stderr.read)
+        end
+
+        Thread.new do
+          puts stdout.read
+        end
 
         if (status = wait_thr.value) != 0
           raise SystemCallError.new("gcloud call failed", status.exitstatus)
