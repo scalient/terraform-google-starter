@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+locals {
+  project_unique_suffix = regex("\\-(?P<suffix>[0-9a-f]+)\\z", module.project.project_id)["suffix"]
+}
+
 module "project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 18.0"
