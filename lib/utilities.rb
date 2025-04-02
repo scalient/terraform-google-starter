@@ -138,23 +138,11 @@ module Utilities
 
     authenticated_user = child_output.chomp
 
-    Open3.popen3(
-      "terraform", "output", "-json",
-    ) do |stdin, stdout, stderr, wait_thr|
-      stdin.close
-
-      Thread.new do
-        $stderr.print(stderr.read)
-      end
-
-      child_output = stdout.read
-
-      if (status = wait_thr.value) != 0
-        raise SystemCallError.new("Terraform call failed", status.exitstatus)
-      end
+    outputs = Pathname.new("modules/0-bootstrap/outputs.json").open("rb") do |f|
+      JSON.parse(f.read)
     end
 
-    organization_id = JSON.parse(child_output)["organization_id"]["value"]
+    organization_id = outputs["common_config"]["value"]["org_id"]
 
     heredoc_content = <<EOS
 .bindings[] | select(.members[] | index("user:#{authenticated_user}")) | .role
@@ -270,25 +258,11 @@ EOS
     end
 
     Dir.chdir(terraform_dir) do
-      child_output = nil
-
-      Open3.popen3(
-        "terraform", "output", "-json",
-      ) do |stdin, stdout, stderr, wait_thr|
-        stdin.close
-
-        Thread.new do
-          $stderr.print(stderr.read)
-        end
-
-        child_output = stdout.read
-
-        if (status = wait_thr.value) != 0
-          raise SystemCallError.new("Terraform call failed", status.exitstatus)
-        end
+      outputs = Pathname.new("outputs.json").open("rb") do |f|
+        JSON.parse(f.read)
       end
 
-      project_id = JSON.parse(child_output)["#{terraform_output_key_prefix}_secrets_project_id"]["value"]
+      project_id = outputs["#{terraform_output_key_prefix}_secrets_project_id"]["value"]
 
       block.call(project_id)
     end
