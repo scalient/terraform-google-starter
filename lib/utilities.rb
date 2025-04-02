@@ -90,6 +90,33 @@ module Utilities
     rake_instance.send(:sh, "terraform", "init", "-migrate-state")
   end
 
+  def self.export_terraform_outputs(rake_instance, outputs_file)
+    Open3.popen3(
+      "terraform", "output", "-json",
+    ) do |stdin, stdout, stderr, wait_thr|
+      stdin.close
+
+      Thread.new do
+        $stderr.print(stderr.read)
+      end
+
+      child_output = stdout.read
+
+      if (status = wait_thr.value) != 0
+        raise SystemCallError.new("Terraform call failed", status.exitstatus)
+      end
+
+      outputs_file.open("wb") do |f|
+        f.write(child_output)
+      end
+
+      # Stage the output file for good measure. Add the `-f` option in case the file happens to be `.gitignore`'d.
+      rake_instance.send(:sh, "git", "add", "-f", "--", outputs_file.to_s)
+
+      JSON.parse(child_output)
+    end
+  end
+
   def self.add_authenticated_user_roles(rake_instance, roles: GCP_IAM_ROLES)
     child_output = nil
 
