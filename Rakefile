@@ -148,8 +148,8 @@ end
 task "migrate" => receipts["migrate"]
 
 file receipts["migrate"] => receipts["stage_bootstrap"] do
-  bucket = stage_bootstrap_tfvars.open("rb") do |f|
-    JSON.parse(f.read)["remote_state_bucket"]
+  bucket = stage_bootstrap_dir.join("outputs.json").open("rb") do |f|
+    JSON.parse(f.read)["gcs_bucket_tfstate"]["value"]
   end
 
   Utilities.create_terraform_backend(self, Pathname.new("backend.tf.json"), bucket)
@@ -337,8 +337,8 @@ Utilities.create_terraform_tasks(
     prerequisites_dir, project_dir, kubernetes_terraform_dir, user_tfvars,
   ],
 ) do
-  bucket = stage_bootstrap_tfvars.open("rb") do |f|
-    JSON.parse(f.read)["remote_state_bucket"]
+  bucket = stage_bootstrap_dir.join("outputs.json").open("rb") do |f|
+    JSON.parse(f.read)["gcs_bucket_tfstate"]["value"]
   end
 
   Utilities.create_terraform_backend(
