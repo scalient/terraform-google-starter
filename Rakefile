@@ -65,6 +65,12 @@ Utilities.create_terraform_tasks(
   self, "prerequisites", receipts["prerequisites"], current_dir,
   [prerequisites_dir, user_tfvars, *current_dir.glob("*.tf")],
 ) do
+  # Ensure that git exists, because some emitted files might automatically get staged.
+  Utilities.ensure_command("git", "--version")
+
+  # Ensure jq exists for parsing Terraform output.
+  Utilities.ensure_command("jq", ".")
+
   # Apply just the `prerequisites` module because this is the initialization run, and the developer could have added
   # later stage modules in `main.tf`.
   sh "terraform", "apply", "-target", "module.prerequisites"

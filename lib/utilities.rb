@@ -47,6 +47,28 @@ module Utilities
     "roles/serviceusage.serviceUsageConsumer",
   ].freeze
 
+  def self.ensure_command(*args)
+    command = args.first
+
+    begin
+      Open3.popen3(*args) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+
+        Thread.new do
+          stderr.read
+        end
+
+        stdout.read
+
+        if (status = wait_thr.value) != 0
+          raise SystemCallError.new("#{command} call failed", status.exitstatus)
+        end
+      end
+    rescue SystemCallError
+      raise ArgumentError, "Please install #{command}"
+    end
+  end
+
   def self.terraform_init(rake_instance)
     rake_instance.send(:sh, "terraform", "init")
     # Potentially rewrite the lock file to include cross-architecture providers.
