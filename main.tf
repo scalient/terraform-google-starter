@@ -29,7 +29,8 @@ module "prerequisites" {
 #
 # module "projects" {
 #   for_each = toset(local.environments)
-#   source              = "./modules/project"
-#   env                 = each.key
-#   remote_state_bucket = var.remote_state_bucket
+#   source                    = "./modules/project"
+#   env                       = each.key
+#   remote_state_bucket       = var.remote_state_bucket
+#   administration_project_id = module.prerequisites.administration_project_id
 # }

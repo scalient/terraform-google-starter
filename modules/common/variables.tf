@@ -19,6 +19,11 @@ variable "remote_state_bucket" {
   type        = string
 }
 
+variable "administration_project_id" {
+  description = "The administration project's id."
+  type        = string
+}
+
 variable "kubernetes_default_namespace" {
   description = "The default namespace that pods will run under."
   default     = "default"

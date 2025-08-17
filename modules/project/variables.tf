@@ -24,6 +24,11 @@ variable "remote_state_bucket" {
   type        = string
 }
 
+variable "administration_project_id" {
+  description = "The administration project's id."
+  type        = string
+}
+
 variable "activate_apis" {
   description = "The list of APIs to be activated."
   type        = list(any)
